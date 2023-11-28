@@ -57,11 +57,47 @@ async function run() {
       // res.send({ message: "post users api called" });
     });
 
+    app.get("/users/admin/:email", async (req, res) => {
+      const email = req.params.email;
+
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      let admin = false;
+      if (user) {
+        admin = user?.role === "admin";
+      }
+      res.send({ admin });
+    });
+
+    app.patch("/users/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+      const result = await userCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
     // Aarticles
     app.post("/article", async (req, res) => {
       const newArticle = req.body;
       console.log(newArticle);
       const result = await articleCollection.insertOne(newArticle);
+      res.send(result);
+    });
+
+    app.post("/article/search", async (req, res) => {
+      const searchTerm = req.body.e;
+
+      // Use a regular expression for a case-insensitive search
+      const regex = new RegExp(searchTerm, "i");
+
+      // Search for items with names matching the searchTerm
+      const result = await articleCollection.find({ articleTitle: regex });
+
       res.send(result);
     });
     app.get("/article", async (req, res) => {
@@ -99,6 +135,20 @@ async function run() {
       const updatedDoc = {
         $set: {
           status: item.status,
+        },
+      };
+
+      const result = await articleCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
+    app.patch("/articleViews/:id", async (req, res) => {
+      const item = req.body;
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          views: item.views,
         },
       };
 
