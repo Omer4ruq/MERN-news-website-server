@@ -68,6 +68,18 @@ async function run() {
       const result = await articleCollection.find().toArray();
       res.send(result);
     });
+
+    app.get("/article/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: new ObjectId(id) };
+      // console.log("query" + query);
+      // const result = await productCollection.findOne(query);
+      const result = await articleCollection.findOne(query);
+      console.log(result);
+      res.send(result);
+      // product details
+    });
     app.delete("/article/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id);
