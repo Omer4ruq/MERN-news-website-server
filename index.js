@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
+// const stripe = require("strip")(process.env.STRIPE_SECRET_KEY);
 // const jwt = require("jsonwebtoken");
 require("dotenv").config();
 // const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -81,11 +82,51 @@ async function run() {
       res.send(result);
     });
 
+    // subscribtion
+    app.patch("/userspremium", async (req, res) => {
+      const { email, subscriptionPlan } = req.body;
+      // const email = req.query.email;
+      console.log(email);
+      const { premiumTaken } = subscriptionPlan;
+      const currentDate = new Date();
+      let query = {};
+      if (req.query?.email) {
+        const query = { email: req.query.email };
+      }
+      let subscriptionEndDate;
+      console.log(premiumTaken);
+      if (premiumTaken == "5") {
+        console.log("ami aci");
+        subscriptionEndDate = new Date(currentDate.getTime() + 5 * 60 * 1000);
+      } else if (premiumTaken === 1) {
+        subscriptionEndDate = new Date(currentDate.getTime() + 1 * 60 * 1000);
+      }
+      const updatedDoc = {
+        $set: {
+          premiumTaken: subscriptionEndDate,
+        },
+      };
+      const result = await userCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    });
     // Aarticles
     app.post("/article", async (req, res) => {
       const newArticle = req.body;
       console.log(newArticle);
       const result = await articleCollection.insertOne(newArticle);
+      res.send(result);
+    });
+
+    app.get("/my-article", async (req, res) => {
+      console.log(req.query.email);
+      // if (req.email.email !== req.query.email) {
+      //   return res.status(403).send({ message: "forbidden access" });
+      // }
+      let query = {};
+      if (req.query?.email) {
+        query = { email: req.query.email };
+      }
+      const result = await articleCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -142,6 +183,20 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/articlepremium/:id", async (req, res) => {
+      const item = req.body;
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          premium: item.premium,
+        },
+      };
+
+      const result = await articleCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
     app.patch("/articleViews/:id", async (req, res) => {
       const item = req.body;
       const id = req.params.id;
@@ -183,6 +238,23 @@ async function run() {
       const result = await publisherCollection.find(publisher).toArray();
       res.send(result);
     });
+
+    // payment
+    // app.post("/create-payment-intent", async (req, res) => {
+    //   const { price } = req.body;
+    //   const amount = parseInt(price * 100);
+    //   console.log(amount, "amount inside the intent");
+
+    //   const paymentIntent = await stripe.paymentIntents.create({
+    //     amount: amount,
+    //     currency: "usd",
+    //     payment_method_types: ["card"],
+    //   });
+
+    //   res.send({
+    //     clientSecret: paymentIntent.client_secret,
+    //   });
+    // });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
