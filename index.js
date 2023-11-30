@@ -130,17 +130,20 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/article/search", async (req, res) => {
-      const searchTerm = req.body.e;
+    app.get("/articleSearch", async (req, res) => {
+      const filter = req.query;
+      console.log(filter.search);
 
-      // Use a regular expression for a case-insensitive search
-      const regex = new RegExp(searchTerm, "i");
+      const query = {
+        articleTitle: { $regex: filter.search },
+      };
 
-      // Search for items with names matching the searchTerm
-      const result = await articleCollection.find({ articleTitle: regex });
+      const cursor = articleCollection.find(query);
+      const result = await cursor.toArray();
 
       res.send(result);
     });
+
     app.get("/article", async (req, res) => {
       const result = await articleCollection.find().toArray();
       res.send(result);
